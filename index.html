@@ -1,0 +1,119 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PRINT-THINGS SHOP QR Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f5f8;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 480px;
+      margin: 30px auto;
+      padding: 22px;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 3px 15px #0002;
+    }
+    h2 { text-align: center; }
+    p { text-align: center; color: #555; }
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 12px;
+      border: 0;
+      border-radius: 8px;
+      background: #1769aa;
+      color: white;
+      font-size: 16px;
+    }
+    #reader { margin-top: 18px; }
+    #result {
+      margin-top: 18px;
+      padding: 14px;
+      background: #eef5ff;
+      border-radius: 8px;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>PRINT-THINGS SHOP</h2>
+    <p>Student Loyalty QR Scanner</p>
+
+    <button id="startButton">START QR SCANNER</button>
+    <button id="stopButton">STOP SCANNER</button>
+
+    <div id="reader"></div>
+    <div id="result">Ready to scan a QR code.</div>
+  </div>
+
+  <script>
+    let scanner = null;
+    let starting = false;
+    let scanned = false;
+
+    const result = document.getElementById("result");
+
+    document.getElementById("startButton").onclick = async function () {
+      if (scanner || starting) return;
+
+      starting = true;
+      scanned = false;
+      result.textContent = "Starting camera...";
+
+      try {
+        scanner = new Html5Qrcode("reader");
+
+        await scanner.start(
+          { facingMode: "environment" },
+          {
+            fps: 10,
+            qrbox: { width: 230, height: 230 }
+          },
+          function (decodedText) {
+            if (scanned) return;
+            scanned = true;
+
+            scanner.pause(true);
+
+            result.textContent =
+              "QR CODE READ SUCCESSFULLY\n\n" + decodedText;
+            result.style.whiteSpace = "pre-wrap";
+          }
+        );
+
+        result.textContent = "Camera started. Point it at a QR code.";
+      } catch (error) {
+        scanner = null;
+        result.textContent = "Camera error: " + error;
+      } finally {
+        starting = false;
+      }
+    };
+
+    document.getElementById("stopButton").onclick = async function () {
+      if (!scanner) return;
+
+      const current = scanner;
+      scanner = null;
+      scanned = false;
+
+      try {
+        await current.stop();
+        await current.clear();
+        result.textContent = "Scanner stopped.";
+      } catch (error) {
+        result.textContent = "Could not stop scanner: " + error;
+      }
+    };
+  </script>
+</body>
+</html>
